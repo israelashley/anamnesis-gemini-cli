@@ -1,0 +1,17 @@
+name = "anamnesis-config"
+description = "Run the Anamnesis OAuth setup — opens a browser for consent, writes ~/.anamnesis/config.json"
+
+prompt = '''
+Run the Anamnesis OAuth setup helper. The user has invoked this command
+to (re)authenticate with anamnesis.smtry.ai. Execute this shell command
+and surface its stdout/stderr to the user; do not interpret or modify
+the output:
+
+```
+${extensionPath}/bin/anamnesis-config
+```
+
+If the user passed arguments after `/anamnesis-config`, forward them
+verbatim to the helper (e.g. `/anamnesis-config --allow-delete` →
+`${extensionPath}/bin/anamnesis-config --allow-delete`).
+'''

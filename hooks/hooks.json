@@ -1,0 +1,32 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "${extensionPath}/hooks/session-start.sh" }
+        ]
+      }
+    ],
+    "BeforeAgent": [
+      {
+        "hooks": [
+          { "type": "command", "command": "${extensionPath}/hooks/before-agent.sh" }
+        ]
+      }
+    ],
+    "AfterAgent": [
+      {
+        "hooks": [
+          { "type": "command", "command": "${extensionPath}/hooks/after-agent.sh" }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          { "type": "command", "command": "${extensionPath}/hooks/session-end.sh" }
+        ]
+      }
+    ]
+  }
+}

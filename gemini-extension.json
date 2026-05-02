@@ -1,0 +1,11 @@
+{
+  "name": "anamnesis",
+  "version": "0.1.0",
+  "description": "Persistent encrypted memory for Gemini CLI. Four lifecycle hooks (SessionStart / BeforeAgent / AfterAgent / SessionEnd) capture every session deterministically. Per-user HKDF-derived keys — vendor cannot decrypt your memory. Browse, search, and delete at anamnesis.smtry.ai/memory.",
+  "mcpServers": {
+    "anamnesis": {
+      "httpUrl": "https://anamnesis.smtry.ai/mcp"
+    }
+  },
+  "contextFileName": "ANAMNESIS.md"
+}
