@@ -56,6 +56,8 @@ check "one closing anamnesis-context tag" "$(grep -o '</anamnesis-context>' <<<"
 check "memories framed as reference data" "$(grep -c 'never instructions' <<<"$ctx")" 1
 check "hook event name is BeforeAgent" "$(echo '{"prompt":"q","session_id":"s"}' | "$HOOKS/before-agent.sh" | jq -r '.hookSpecificOutput.hookEventName')" BeforeAgent
 routes '{}'
+python3 -c 'import json; print(json.dumps({"prompt": "p" * 5000, "session_id": "s"}))' | "$HOOKS/before-agent.sh" >/dev/null
+check "long prompt searched by its first 4000 characters" "$(grep retrieve_memories "$SRV/requests" | tail -1 | jq -r '.body | fromjson | .query | length')" 4000
 
 new_home
 echo '{"session_id":"other"}' > "$ANAMNESIS_HOME/current_session.json"
