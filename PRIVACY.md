@@ -1,55 +1,65 @@
-# Privacy — anamnesis Claude Code plugin
+# Privacy — anamnesis Gemini CLI extension
 
-## What the hooks send
+## What the hooks send, and when
 
-On every Claude Code lifecycle event, the plugin hooks read data from
-Claude Code stdin and send it to `https://anamnesis.smtry.ai` over HTTPS:
+The hooks run on your machine and send to the `server_url` in
+`~/.anamnesis/config.json` (by default `https://anamnesis.smtry.ai`) over
+HTTPS:
 
-- **SessionStart.** Nothing outbound except a health probe with your api_key.
-- **UserPromptSubmit.** Your prompt text (as a query) to retrieve relevant
-  memories. The response is injected into the turn's context.
-- **Stop.** The assistant's reply and user prompt for the turn (sometimes
-  the whole transcript, depending on what Claude Code puts in stdin).
-- **SessionEnd.** Only the session id and a close reason.
+- **SessionStart.** In the background: any payloads queued after an earlier
+  failed upload (conversation text or a session close), then a
+  `get_memory_stats` reachability probe.
+- **BeforeAgent.** Your prompt text and the session id, as a
+  `retrieve_memories` query. Up to five recalled lines and a date/time
+  anchor are added to the turn's context.
+- **AfterAgent.** In the background, after each turn: your prompt and the
+  model's final response for that turn, with the session id, to
+  `log_session`. No usage telemetry is sent.
+- **SessionEnd.** The session id and the close reason, to `session_close`.
 
-These hooks see the full transcript of the session — that's how capture
-works at all. They run **locally on your machine.**
+Every request carries `Authorization: Bearer <access token>` (OAuth), or
+`X-Anamnesis-Key: <api_key>` for a legacy api_key install. When the access
+token is near expiry, the refresh token and client id go to `/oauth/token`.
+Credentials and bodies reach `curl` through 0600 files or stdin, never its
+command line.
+
+## When nothing is sent
+
+With `anamnesis pause` in effect, or `ANAMNESIS_CAPTURE` set to `off`, `0`,
+`false` or `no` (any case; an unrecognised value also counts as off), every
+hook exits without sending anything or adding anything to context, and the
+upload queue is not replayed.
+
+The extension also registers Anamnesis as a remote MCP server
+(`httpUrl`) that Gemini CLI connects to itself. Tools the model calls
+through it are not covered by the pause file or `ANAMNESIS_CAPTURE`.
+
+## What stays on your machine
+
+`~/.anamnesis/` holds your tokens (`config.json`), payloads waiting to be
+uploaded (`pending_uploads/`, plaintext conversation text until delivered)
+and an error log. Files the hooks create are mode 0600.
 
 ## What the server does
 
-1. Authenticates your request via the `X-Anamnesis-Key` header.
-2. Derives an encryption key from your api_key via HKDF-SHA256.
-3. Chunks the transcript, dedups by SHA-256 prefix, and writes each
-   chunk encrypted under your derived key (Fernet: AES-128-CBC + HMAC-SHA256).
-4. Never writes plaintext to disk. Content lives in request memory only
-   for as long as the request is in flight.
-
-## What the server can and can't do
-
-- **Can't** read your memory content without your api_key. The key derives
-  from your api_key; we don't store it separately.
-- **Can't** use your content to train any model. This is architectural,
-  not a policy promise.
-- **Can** see access patterns (when you log in, when hooks fire, byte
-  counts). This is unavoidable for any hosted service.
-- **Can** respond to a subpoena with ciphertext, but the ciphertext is
-  useless without your api_key.
-
-See [anamnesis.smtry.ai/privacy](https://anamnesis.smtry.ai/privacy)
-for the full policy, including subprocessor list and retention.
+Content is encrypted at rest under a per-user key derived from your own
+api_key, with no master key. It is not yet end-to-end encrypted:
+[anamnesis.smtry.ai/security](https://anamnesis.smtry.ai/security) says
+exactly who can decrypt what, and
+[anamnesis.smtry.ai/privacy](https://anamnesis.smtry.ai/privacy) has the full
+policy, including subprocessors and retention.
 
 ## Pausing / revoking
 
-- Run `anamnesis pause` to stop capture immediately. Hooks become no-ops
-  until you run `anamnesis resume`.
-- Run `anamnesis-config` again to rotate your api_key.
+- `anamnesis pause` stops the hooks until `anamnesis resume`.
+- `anamnesis-config` signs in again and replaces the stored tokens.
 - Delete individual memories or wipe everything at
   [anamnesis.smtry.ai/memory](https://anamnesis.smtry.ai/memory).
 
 ## Uninstall
 
 ```
-/plugin uninstall anamnesis@smtry
+gemini extensions uninstall anamnesis
 rm -rf ~/.anamnesis
 ```
 
