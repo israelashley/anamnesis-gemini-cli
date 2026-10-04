@@ -23,18 +23,13 @@ if anamnesis_auth_warning_due; then
 fi
 
 # Built from stdin, never from jq arguments: a long turn exceeds ARG_MAX.
-BODY="$(printf '%s' "$STDIN_JSON" | jq -c --arg sid "$ANAMNESIS_SID" '
-    [ (.prompt | strings | select(length > 0) | "user: " + .),
-      (.prompt_response | strings | select(length > 0) | "assistant: " + .) ]
-    | select(length > 0)
-    | {session_id: $sid, transcript: join("\n"), source: "gemini_cli_extension"}' 2>/dev/null)"
-[ -n "$BODY" ] || exit 0
+TURNS="$(printf '%s' "$STDIN_JSON" | jq -c '
+    (.prompt | strings | select(length > 0) | "user: " + .),
+    (.prompt_response | strings | select(length > 0) | "assistant: " + .)' 2>/dev/null)"
+[ -n "$TURNS" ] || exit 0
 
 anamnesis_capture_worker() {
-    if ! anamnesis_post "/mcp/tools/log_session" "$BODY" >/dev/null; then
-        anamnesis_queue_payload "/mcp/tools/log_session" "$BODY"
-        anamnesis_log_error "log_session_queued" "sid=$ANAMNESIS_SID"
-    fi
+    anamnesis_send_turns "$ANAMNESIS_SID" '{"source": "gemini_cli_extension"}' <<<"$TURNS"
 }
 
 # Detached with no fds on the hook's pipes, so Gemini CLI does not wait.

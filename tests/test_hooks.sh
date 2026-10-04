@@ -77,6 +77,14 @@ check "1.5 MB turn uploads (no ARG_MAX failure)" \
     "$(grep log_session "$SRV/requests" | jq -r '.body | fromjson | .transcript' | awk 'length > 1500000' | wc -l | tr -d ' ')" 1
 
 new_home
+python3 -c 'import json; print(json.dumps({"session_id": "g3", "prompt": "big", "prompt_response": "z" * 2100000}))' \
+    | "$HOOKS/after-agent.sh" >/dev/null
+for _ in $(seq 60); do [ "$(count_req log_session)" -ge 2 ] && break; sleep 0.5; done
+check "a turn over the server limit is cut to it and still uploads" \
+    "$(grep log_session "$SRV/requests" | jq -r '.body | fromjson | .transcript | length' | tr '\n' ' ')" "9 2000000 "
+check "the cut is logged" "$(grep -c capture_truncated "$ANAMNESIS_HOME/hook_errors.log")" 1
+
+new_home
 routes '{"/mcp/tools/retrieve_memories": {"status": 401}}'
 m1="$(echo '{"prompt":"q","session_id":"s1"}' | "$HOOKS/before-agent.sh" | jq -r '.systemMessage // empty')"
 m2="$(echo '{"prompt":"q","session_id":"s1"}' | "$HOOKS/before-agent.sh" | jq -r '.systemMessage // empty')"
