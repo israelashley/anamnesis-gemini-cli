@@ -7,14 +7,14 @@ says exactly who can decrypt what. Browse, search, and delete any memory
 at [anamnesis.smtry.ai/memory](https://anamnesis.smtry.ai/memory). What
 is sent, and when, is in [PRIVACY.md](PRIVACY.md).
 
-Companion to [`anamnesis-claude-code`](https://github.com/israelashley/anamnesis-claude-code).
+Companion to [`anamnesis-claude-code`](https://github.com/smtrycorp/anamnesis-claude-code).
 Same backend, same memory root, same engrams — your work in Gemini and
 Claude lands in one place.
 
 ## Install
 
 ```
-gemini extensions install https://github.com/israelashley/anamnesis-gemini-cli
+gemini extensions install https://github.com/smtrycorp/anamnesis-gemini-cli
 ```
 
 Then, once:
