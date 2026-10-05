@@ -18,10 +18,12 @@ HTTPS:
 - **SessionEnd.** The session id and the close reason, to `session_close`.
 
 Every request carries `Authorization: Bearer <access token>` (OAuth), or
-`X-Anamnesis-Key: <api_key>` for a legacy api_key install. When the access
+`X-Anamnesis-Key: <api_key>` for a legacy api_key install, and an
+`X-Anamnesis-Client: gemini-cli/<version>` header naming this extension
+and its version, nothing else about you or your machine. When the access
 token is near expiry, the refresh token and client id go to `/oauth/token`.
-Credentials and bodies reach `curl` through 0600 files or stdin, never its
-command line.
+Credentials and bodies reach `curl` through 0600 files, never its command
+line.
 
 ## When nothing is sent
 
