@@ -43,7 +43,7 @@ you can skip this step.** Both extensions read the same
 | Hook | When | What it does |
 |------|------|--------------|
 | `SessionStart` | Once per session | Adopts Gemini CLI's session id. In the background, replays the pending-upload queue and probes the server. |
-| `BeforeAgent` | After the user submits a prompt, before the agent plans | Retrieves up to 5 relevant memories and injects them with a `<current-datetime>` anchor (local clock, plus server UTC from the HTTP `Date:` header) as `additionalContext`. Gives up after about 3 seconds so a slow server never holds the prompt. |
+| `BeforeAgent` | After the user submits a prompt, before the agent plans | Retrieves up to 5 relevant memories and injects them with a `<current-datetime>` anchor (local clock, plus server UTC from the HTTP `Date:` header) as `additionalContext`. Has 8 seconds in all for the recall, token refresh and one retry included, so a slow server never holds the prompt for long, and a recall that fails says so in a one-line `[anamnesis]` notice. |
 | `AfterAgent` | After every assistant turn ends | In the background, uploads the prompt and final response via `log_session`. |
 | `SessionEnd` | Session close | Calls `session_close`, advancing the server-side pipeline (episodes → echoes). |
 
@@ -88,9 +88,35 @@ Hooks **never block Gemini CLI** and always exit 0. On a server error
 they append a structured entry to `~/.anamnesis/hook_errors.log` and, for
 an upload, queue the payload under `~/.anamnesis/pending_uploads/`. The
 next `SessionStart` replays the queue in the background, stopping at the
-first failure. When the server rejects your sign-in, the hooks emit one
-`[anamnesis]` warning line per session as a `systemMessage` until
-`anamnesis-config` fixes it.
+first failure. A recall that fails is logged with the stage that failed (token refresh,
+request or response parsing), curl's exit code, the HTTP status, the
+seconds it took and the deadline in force, never with a token, a prompt,
+a memory or a response body, and the hook emits a one-line
+`[anamnesis] recall unavailable this turn (...)` notice as a
+`systemMessage` on the first failure of each kind in a session and again
+after a recovery. When the server rejects your sign-in, that notice says
+to run `anamnesis-config` and the capture hook emits one warning line per
+session.
+
+Every request names the client and version that sent it in an
+`X-Anamnesis-Client: gemini-cli/<version>` header, read from
+`gemini-extension.json`.
+
+## What changed in 0.1.2
+
+Recall used to give up after 3 seconds and say nothing when it failed; a
+quarter of recalls on a busy account took longer than that, so the prompt
+went out without memories and nobody could tell. The recall now has 8
+seconds in all, retries once when the server was down or not reached, and
+honours a `Retry-After` it can fit in the budget. Every failure is logged
+with its cause and shown once per cause, a dead refresh token included. A
+reply that is not a recall answer counts as a failure, not as an empty
+result. Requests carry an `X-Anamnesis-Client` header.
+`ANAMNESIS_PROMPT_TIMEOUT` now sets the whole recall budget rather than
+one request's cap, and `hooks.json` gives the prompt hook 15 s and session
+start 20 s before Gemini CLI may stop them.
+A recall tried a second time carries `attempt: 2` in its request, so the
+server can tell one recall tried twice from two recalls.
 
 ## What's different from the Claude Code plugin
 
