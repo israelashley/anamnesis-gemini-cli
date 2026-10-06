@@ -3,14 +3,14 @@
     "SessionStart": [
       {
         "hooks": [
-          { "type": "command", "command": "${extensionPath}/hooks/session-start.sh" }
+          { "type": "command", "command": "${extensionPath}/hooks/session-start.sh", "timeout": 20000 }
         ]
       }
     ],
     "BeforeAgent": [
       {
         "hooks": [
-          { "type": "command", "command": "${extensionPath}/hooks/before-agent.sh" }
+          { "type": "command", "command": "${extensionPath}/hooks/before-agent.sh", "timeout": 15000 }
         ]
       }
     ],
