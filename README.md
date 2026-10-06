@@ -115,6 +115,8 @@ result. Requests carry an `X-Anamnesis-Client` header.
 `ANAMNESIS_PROMPT_TIMEOUT` now sets the whole recall budget rather than
 one request's cap, and `hooks.json` gives the prompt hook 15 s and session
 start 20 s before Gemini CLI may stop them.
+A recall tried a second time carries `attempt: 2` in its request, so the
+server can tell one recall tried twice from two recalls.
 
 ## What's different from the Claude Code plugin
 
