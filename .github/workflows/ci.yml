@@ -9,10 +9,10 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: bash -n and shellcheck
         run: |
           for f in hooks/*.sh bin/anamnesis bin/anamnesis-config; do
@@ -21,9 +21,9 @@ jobs:
           shellcheck -x -S warning hooks/*.sh bin/anamnesis bin/anamnesis-config
 
   tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: hook tests
         run: bash tests/test_hooks.sh
